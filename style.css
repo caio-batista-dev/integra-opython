@@ -26,17 +26,15 @@ body {
 .hidden { display: none !important; }
 
 /* --- Estilos do Menu e Seleção --- */
-
 #main-menu-screen {
     background-image: url('building-bg.png');
     background-size: cover;
     background-position: center;
 }
 
-/* CORREÇÃO: Fundo do menu agora é translúcido com efeito de desfoque */
 .menu-container {
-    background-color: rgba(26, 35, 59, 0.85); /* 85% opaco */
-    backdrop-filter: blur(5px); /* Desfoque no fundo */
+    background-color: rgba(26, 35, 59, 0.85);
+    backdrop-filter: blur(5px);
     padding: 40px;
     border-radius: 15px;
     text-align: center;
@@ -58,10 +56,27 @@ body {
 
 .btn {
     padding: 12px 25px; border: none; border-radius: 8px;
-    font-size: 1.1em; cursor: pointer; transition: background-color 0.2s, transform 0.1s;
+    font-size: 1.1em; cursor: pointer; transition: all 0.2s;
 }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.btn-icon {
+    padding: 10px;
+    font-size: 1.5em;
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 50%;
+}
+.btn-icon.active {
+    background-color: var(--correct-color);
+    border-color: var(--correct-color);
+    box-shadow: 0 0 10px var(--correct-color);
+}
+
 .btn-primary { background-color: var(--primary-blue); color: #000; font-weight: bold; }
 .btn-primary:hover:not(:disabled) { background-color: #33ccff; }
 .btn-secondary { background-color: #3a4a75; color: var(--text-color); }
@@ -70,7 +85,13 @@ body {
 .btn-tertiary:hover { background-color: #3a4a75; }
 
 .menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 500px; margin: auto; }
-.selection-controls { margin-bottom: 20px; }
+.selection-controls { 
+    margin-bottom: 20px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
 .selection-footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; }
 .department-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
 .checkbox-label {
@@ -90,6 +111,7 @@ body {
 .game-controls {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
     gap: 15px;
     padding: 0 30px 10px;
     position: relative;
@@ -210,6 +232,19 @@ body {
     display: flex; justify-content: space-between; align-items: center;
 }
 .top-dept-item span:first-child { font-size: 1.2em; font-weight: bold; }
+
+/* --- Estilos da Tela de Teste de Recursos --- */
+.voice-output-box {
+    background-color: #101729;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 40px;
+    margin: 30px 0;
+    font-size: 1.8em;
+    color: var(--yellow-glow);
+    min-height: 80px;
+    width: 80%;
+}
 
 #feedback-flash {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;

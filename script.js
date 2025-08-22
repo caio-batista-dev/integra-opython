@@ -6,10 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
         game: document.getElementById('game-screen'),
         evaluation: document.getElementById('evaluation-screen'),
         stats: document.getElementById('stats-screen'),
+        resourceTest: document.getElementById('resource-test-screen'),
     };
     const overlays = { pause: document.getElementById('pause-overlay') };
     const feedbackFlash = document.getElementById('feedback-flash');
-    const gameControls = { pauseBtn: document.getElementById('pause-btn'), returnToMenuBtn: document.getElementById('return-to-menu-btn') };
+    const gameControls = { pauseBtn: document.getElementById('pause-btn'), returnToMenuBtn: document.getElementById('return-to-menu-btn'), voiceToggle: document.getElementById('game-voice-toggle') };
     const hud = { dias: document.getElementById('dias-restantes'), pontos: document.getElementById('pontuacao'), tempo: document.getElementById('tempo') };
     const modal = {
         element: document.getElementById('sequence-modal'), deptName: document.getElementById('modal-department-name'),
@@ -19,18 +20,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectionControls = {
         grid: document.getElementById('department-selection-grid'), selectAllBtn: document.getElementById('select-all-btn'),
         clearAllBtn: document.getElementById('clear-all-btn'), startGameBtn: document.getElementById('start-game-btn'),
-        backToMenuBtn: document.getElementById('back-to-menu-btn'),
+        backToMenuBtn: document.getElementById('back-to-menu-btn'), voiceToggle: document.getElementById('selection-voice-toggle'),
     };
-    const menuControls = { playBtn: document.getElementById('play-button') };
+    const menuControls = { playBtn: document.getElementById('play-button'), resourceTestBtn: document.getElementById('resource-test-btn') };
     const evaluationControls = { finalGrade: document.getElementById('final-grade'), viewStatsBtn: document.getElementById('view-stats-btn') };
     const statsControls = {
         time: document.getElementById('stats-time'), correct: document.getElementById('stats-correct'),
         incorrect: document.getElementById('stats-incorrect'), completed: document.getElementById('stats-completed'),
         topDeptsList: document.getElementById('top-depts-list'), restartBtn: document.getElementById('restart-button'),
     };
+    const resourceTestControls = {
+        output: document.getElementById('voice-output'),
+        backBtn: document.getElementById('back-to-menu-from-test-btn'),
+    };
 
     // --- DADOS E ESTADO DO JOGO ---
-    // CORREÇÃO: Nomes dos departamentos atualizados
     const ALL_DEPARTMENTS_DATA = [
         { id: 'atendimento', name: 'Atendimento', men: 1, women: 0, color: '#007bff' },
         { id: 'camaras', name: 'Câmaras Setoriais', men: 1, women: 1, color: '#17a2b8' },
@@ -58,7 +62,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let gameState = {};
     let timers = {};
+    let isVoiceControlActive = false;
+    let recognition;
 
+    // --- LÓGICA DE COMANDO DE VOZ (WEB SPEECH API) ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const isSpeechRecognitionSupported = !!SpeechRecognition;
+    const VOICE_COMMANDS = { 'cima': 'ArrowUp', 'baixo': 'ArrowDown', 'esquerda': 'ArrowLeft', 'direita': 'ArrowRight' };
+
+    function setupSpeechRecognition() {
+        if (!isSpeechRecognitionSupported) {
+            console.warn("Web Speech API não é suportada neste navegador.");
+            [selectionControls.voiceToggle, gameControls.voiceToggle, menuControls.resourceTestBtn].forEach(btn => btn.disabled = true);
+            return;
+        }
+        recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = true;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+            const lastResult = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+            resourceTestControls.output.textContent = `Último comando ouvido: "${lastResult}"`;
+            const command = Object.keys(VOICE_COMMANDS).find(cmd => lastResult.includes(cmd));
+            if (command && gameState.activeDepartment && !gameState.isPaused) {
+                handleKeyPress({ key: VOICE_COMMANDS[command], preventDefault: () => {} });
+            }
+        };
+        recognition.onerror = (event) => {
+            console.error("Erro no reconhecimento de voz:", event.error);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                alert('Permissão para o microfone negada. Os comandos de voz não funcionarão.');
+                toggleVoiceControls(false);
+            }
+        };
+        recognition.onend = () => {
+            if (isVoiceControlActive) {
+                try { recognition.start(); } catch(e) {}
+            }
+        };
+    }
+
+    function toggleVoiceControls(forceState = null) {
+        if (!isSpeechRecognitionSupported) return;
+        isVoiceControlActive = forceState !== null ? forceState : !isVoiceControlActive;
+        if (isVoiceControlActive) {
+            try { recognition.start(); } catch (e) { console.error("Erro ao iniciar reconhecimento:", e); }
+        } else {
+            try { recognition.stop(); } catch(e) {}
+        }
+        [selectionControls.voiceToggle, gameControls.voiceToggle].forEach(btn => btn.classList.toggle('active', isVoiceControlActive));
+    }
+
+    // --- FUNÇÕES DE FEEDBACK ---
     function playFeedback(type) {
         const sound = type === 'correct' ? correctSound : errorSound;
         sound.currentTime = 0;
@@ -67,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { feedbackFlash.className = ''; }, 300);
     }
 
+    // --- FUNÇÕES DE CONTROLE DE TELA E ESTADO ---
     function showScreen(screenName) {
         Object.values(screens).forEach(s => s.classList.add('hidden'));
         screens[screenName].classList.remove('hidden');
@@ -95,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- LÓGICA DA TELA DE SELEÇÃO ---
     function populateSelectionGrid() {
         selectionControls.grid.innerHTML = '';
         ALL_DEPARTMENTS_DATA.forEach((dept, index) => {
@@ -113,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionControls.startGameBtn.disabled = checkedCount === 0;
     }
 
+    // --- LÓGICA PRINCIPAL DO JOGO ---
     function setupNewGame() {
         const selectedIndexes = [...selectionControls.grid.querySelectorAll('input:checked')].map(cb => parseInt(cb.value));
         const selectedDepartments = selectedIndexes.map(i => ({
@@ -215,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleGlobalKeys(e) { if (e.key.toLowerCase() === 'p') togglePause(); }
 
     function handleKeyPress(e) {
-        if (!gameState.activeDepartment || !ARROW_KEYS.includes(e.key)) return;
+        if (!gameState.activeDepartment || gameState.isPaused || !ARROW_KEYS.includes(e.key)) return;
         e.preventDefault();
         if (e.key === gameState.currentSequence[gameState.currentStep]) {
             playFeedback('correct');
@@ -273,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(timers.input);
         window.removeEventListener('keydown', handleGlobalKeys);
         window.removeEventListener('keydown', handleKeyPress);
+        if (isVoiceControlActive) toggleVoiceControls(false);
         if (gameState.isPaused) togglePause(false);
     }
 
@@ -284,8 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateFinalGrade(isVictory) {
-        const totalSequencesAttempted = gameState.totalCorrects / (gameState.currentSequence.length || 3) + gameState.totalIncorrects;
-        const successfulSequences = gameState.totalCorrects / (gameState.currentSequence.length || 3);
+        const successfulSequences = gameState.totalCorrects / (gameState.currentSequence?.length || 3);
+        const totalSequencesAttempted = successfulSequences + gameState.totalIncorrects;
         const accuracy = totalSequencesAttempted > 0 ? successfulSequences / totalSequencesAttempted : 0;
         const timeTaken = (Date.now() - gameState.startTime) / 1000;
         const timeEfficiency = Math.max(0, (GAME_DURATION_SECONDS - timeTaken) / GAME_DURATION_SECONDS);
@@ -320,6 +380,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS ---
     menuControls.playBtn.addEventListener('click', () => showScreen('selection'));
+    menuControls.resourceTestBtn.addEventListener('click', () => {
+        showScreen('resourceTest');
+        if (!isVoiceControlActive) toggleVoiceControls(true);
+    });
+    resourceTestControls.backBtn.addEventListener('click', () => {
+        if (isVoiceControlActive) toggleVoiceControls(false);
+        showScreen('menu');
+    });
     selectionControls.backToMenuBtn.addEventListener('click', () => showScreen('menu'));
     selectionControls.startGameBtn.addEventListener('click', setupNewGame);
     selectionControls.selectAllBtn.addEventListener('click', () => {
@@ -331,6 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSelectionCount();
     });
     selectionControls.grid.addEventListener('change', updateSelectionCount);
+    selectionControls.voiceToggle.addEventListener('click', () => toggleVoiceControls());
+    gameControls.voiceToggle.addEventListener('click', () => toggleVoiceControls());
     evaluationControls.viewStatsBtn.addEventListener('click', showStatsScreen);
     statsControls.restartBtn.addEventListener('click', () => {
         showScreen('menu');
@@ -341,5 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INICIALIZAÇÃO ---
     populateSelectionGrid();
+    setupSpeechRecognition();
     showScreen('menu');
 });
