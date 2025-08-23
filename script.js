@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- MAPEAMENTO DE ELEMENTOS DO DOM ---
+    const gameWrapper = document.getElementById('game-wrapper');
     const screens = {
         menu: document.getElementById('main-menu-screen'),
         selection: document.getElementById('selection-screen'),
@@ -54,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ARROW_KEYS = Object.keys(ARROW_MAP);
     const INPUT_TIME_MS = 3000;
     const GAME_DURATION_SECONDS = 300;
+    const BASE_WIDTH = 1280;
+    const BASE_HEIGHT = 720;
 
     const correctSound = new Audio('correct.mp3');
     const errorSound = new Audio('error.mp3');
@@ -64,6 +67,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let timers = {};
     let isVoiceControlActive = false;
     let recognition;
+
+    // --- LÓGICA DE RESPONSIVIDADE ---
+    function resizeGame() {
+        const scaleX = window.innerWidth / BASE_WIDTH;
+        const scaleY = window.innerHeight / BASE_HEIGHT;
+        const scale = Math.min(scaleX, scaleY);
+        gameWrapper.style.transform = `scale(${scale})`;
+        gameWrapper.style.left = `${(window.innerWidth - BASE_WIDTH * scale) / 2}px`;
+        gameWrapper.style.top = `${(window.innerHeight - BASE_HEIGHT * scale) / 2}px`;
+    }
 
     // --- LÓGICA DE COMANDO DE VOZ (WEB SPEECH API) ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -195,7 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGameLoops() {
         clearInterval(timers.main);
         timers.main = setInterval(() => {
-            if (gameState.isPaused) return;
+            // CORREÇÃO: O timer principal também pausa quando uma sequência está ativa
+            if (gameState.isPaused || gameState.activeDepartment) return;
             gameState.timeLeft--;
             gameState.daysLeft -= 0.01;
             if (gameState.timeLeft <= 0 || gameState.daysLeft <= 0) endGame(false);
@@ -234,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startSequence(dept) {
-        gameState.isPaused = true;
+        // CORREÇÃO: Não usamos mais gameState.isPaused aqui
         gameState.activeDepartment = dept;
         const sequenceLength = Math.floor(Math.random() * 3) + 3;
         gameState.currentSequence = Array.from({ length: sequenceLength }, () => ARROW_KEYS[Math.floor(Math.random() * ARROW_KEYS.length)]);
@@ -274,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleGlobalKeys(e) { if (e.key.toLowerCase() === 'p') togglePause(); }
 
     function handleKeyPress(e) {
+        // CORREÇÃO: A verificação de pausa agora funciona corretamente
         if (!gameState.activeDepartment || gameState.isPaused || !ARROW_KEYS.includes(e.key)) return;
         e.preventDefault();
         if (e.key === gameState.currentSequence[gameState.currentStep]) {
@@ -322,8 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         modal.element.classList.add('hidden');
         createDepartmentCards();
-        gameState.isPaused = false;
         gameState.activeDepartment = null;
+        // CORREÇÃO: Não mexemos mais em gameState.isPaused aqui
         setTimeout(pickNextDepartment, 1200);
     }
 
@@ -410,7 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
     gameControls.returnToMenuBtn.addEventListener('click', returnToMenu);
 
     // --- INICIALIZAÇÃO ---
+    window.addEventListener('resize', resizeGame);
     populateSelectionGrid();
     setupSpeechRecognition();
+    resizeGame();
     showScreen('menu');
 });

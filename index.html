@@ -8,128 +8,133 @@
 </head>
 <body>
 
-    <div id="feedback-flash"></div>
+    <!-- Wrapper para escalar todo o conteúdo do jogo -->
+    <div id="game-wrapper">
 
-    <!-- Tela de Menu Principal -->
-    <div id="main-menu-screen" class="screen">
-        <div class="menu-container">
-            <h1>Jogo dos Departamentos</h1>
-            <p>Pressione as setas do teclado correspondentes às que aparecem em cada departamento. Complete os eventos surpresa para ganhar pontos bônus e finalize o projeto em 20 dias simulados!</p>
-            <div class="menu-buttons">
-                <button id="play-button" class="btn btn-primary">Jogar</button>
-                <button class="btn btn-secondary" disabled>Consultar Histórico</button>
-                <button class="btn btn-secondary" disabled>Opções</button>
-                <button id="resource-test-btn" class="btn btn-secondary">Testes de Recursos</button>
-            </div>
-        </div>
-    </div>
+        <div id="feedback-flash"></div>
 
-    <!-- Tela de Seleção de Departamentos -->
-    <div id="selection-screen" class="screen hidden">
-        <div class="selection-container">
-            <h2>Selecione os Departamentos</h2>
-            <div class="selection-controls">
-                <button id="select-all-btn" class="btn btn-tertiary">Selecionar Todos</button>
-                <button id="clear-all-btn" class="btn btn-tertiary">Limpar Seleção</button>
-                <button id="selection-voice-toggle" class="btn btn-icon" title="Ativar/Desativar Comandos de Voz">🎤</button>
-            </div>
-            <div id="department-selection-grid" class="department-selection-grid"></div>
-            <div class="selection-footer">
-                <button id="back-to-menu-btn" class="btn btn-secondary">Voltar</button>
-                <button id="start-game-btn" class="btn btn-primary" disabled>Iniciar Jogo (0)</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tela Principal do Jogo -->
-    <div id="game-screen" class="screen hidden">
-        <div class="game-container">
-            <div class="game-controls">
-                <button id="game-voice-toggle" class="btn btn-icon" title="Ativar/Desativar Comandos de Voz">🎤</button>
-                <button id="pause-btn" class="btn btn-tertiary">Pausar (P)</button>
-                <button id="return-to-menu-btn" class="btn btn-tertiary">Voltar ao Menu</button>
-            </div>
-            <header class="hud">
-                <div id="dias-restantes">Dias Restantes: 20.0</div>
-                <div id="pontuacao">Pontuação: 0</div>
-                <div id="tempo">Tempo: 05:00</div>
-            </header>
-            <main id="departments-grid" class="departments-grid"></main>
-        </div>
-    </div>
-
-    <!-- Tela de Testes de Recursos -->
-    <div id="resource-test-screen" class="screen hidden">
-        <div class="selection-container">
-            <h2>Testes de Recursos: Comando de Voz</h2>
-            <p>Fale os comandos "Cima", "Baixo", "Esquerda" ou "Direita". O texto reconhecido aparecerá abaixo.</p>
-            <div id="voice-output" class="voice-output-box">Aguardando comando...</div>
-            <div class="selection-footer">
-                <button id="back-to-menu-from-test-btn" class="btn btn-secondary">Voltar ao Menu</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Sequência -->
-    <div id="sequence-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-ui-container">
-                <h2 id="modal-department-name">Atendimento</h2>
-                <div class="meta-display">Meta: <span id="modal-meta">0 / 3</span></div>
-                <div id="input-timer-bar-container" class="input-timer-bar-container">
-                    <div id="input-timer-bar"></div>
-                </div>
-                <div id="modal-arrows-sequence" class="arrows-sequence"></div>
-                <div id="modal-characters" class="characters-container"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sobreposição de Pausa -->
-    <div id="pause-overlay" class="modal-overlay hidden">
-        <div class="pause-text">JOGO PAUSADO</div>
-    </div>
-
-    <!-- Tela de Avaliação da Diretoria -->
-    <div id="evaluation-screen" class="screen hidden">
-        <div class="evaluation-container">
-            <div class="evaluation-note">
-                <p>NOTA:</p>
-                <h2 id="final-grade">10</h2>
-            </div>
-            <button id="view-stats-btn" class="btn btn-primary">Ver Desempenho</button>
-        </div>
-    </div>
-
-    <!-- Tela de Estatísticas de Desempenho -->
-    <div id="stats-screen" class="screen hidden">
-        <div class="stats-container">
-            <h1>Avaliação da Diretoria</h1>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <p>Tempo de Jogo</p>
-                    <span id="stats-time">00:00</span>
-                </div>
-                <div class="stat-box">
-                    <p>Corretos</p>
-                    <span id="stats-correct" class="correct-text">0</span>
-                </div>
-                <div class="stat-box">
-                    <p>Incorretos</p>
-                    <span id="stats-incorrect" class="incorrect-text">0</span>
-                </div>
-                <div class="stat-box">
-                    <p>Eventos Concluídos</p>
-                    <span id="stats-completed">0</span>
+        <!-- Tela de Menu Principal -->
+        <div id="main-menu-screen" class="screen">
+            <div class="menu-container">
+                <h1>Jogo dos Departamentos</h1>
+                <p>Pressione as setas do teclado correspondentes às que aparecem em cada departamento. Complete os eventos surpresa para ganhar pontos bônus e finalize o projeto em 20 dias simulados!</p>
+                <div class="menu-buttons">
+                    <button id="play-button" class="btn btn-primary">Jogar</button>
+                    <button class="btn btn-secondary" disabled>Consultar Histórico</button>
+                    <button class="btn btn-secondary" disabled>Opções</button>
+                    <button id="resource-test-btn" class="btn btn-secondary">Testes de Recursos</button>
                 </div>
             </div>
-            <div class="top-depts-container">
-                <h3>🏆 Top 3 Departamentos</h3>
-                <div id="top-depts-list"></div>
-            </div>
-            <button id="restart-button" class="btn btn-primary">Jogar Novamente</button>
         </div>
-    </div>
+
+        <!-- Tela de Seleção de Departamentos -->
+        <div id="selection-screen" class="screen hidden">
+            <div class="selection-container">
+                <h2>Selecione os Departamentos</h2>
+                <div class="selection-controls">
+                    <button id="select-all-btn" class="btn btn-tertiary">Selecionar Todos</button>
+                    <button id="clear-all-btn" class="btn btn-tertiary">Limpar Seleção</button>
+                    <button id="selection-voice-toggle" class="btn btn-icon" title="Ativar/Desativar Comandos de Voz">🎤</button>
+                </div>
+                <div id="department-selection-grid" class="department-selection-grid"></div>
+                <div class="selection-footer">
+                    <button id="back-to-menu-btn" class="btn btn-secondary">Voltar</button>
+                    <button id="start-game-btn" class="btn btn-primary" disabled>Iniciar Jogo (0)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela Principal do Jogo -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-container">
+                <div class="game-controls">
+                    <button id="game-voice-toggle" class="btn btn-icon" title="Ativar/Desativar Comandos de Voz">🎤</button>
+                    <button id="pause-btn" class="btn btn-tertiary">Pausar (P)</button>
+                    <button id="return-to-menu-btn" class="btn btn-tertiary">Voltar ao Menu</button>
+                </div>
+                <header class="hud">
+                    <div id="dias-restantes">Dias Restantes: 20.0</div>
+                    <div id="pontuacao">Pontuação: 0</div>
+                    <div id="tempo">Tempo: 05:00</div>
+                </header>
+                <main id="departments-grid" class="departments-grid"></main>
+            </div>
+        </div>
+
+        <!-- Tela de Testes de Recursos -->
+        <div id="resource-test-screen" class="screen hidden">
+            <div class="selection-container">
+                <h2>Testes de Recursos: Comando de Voz</h2>
+                <p>Fale os comandos "Cima", "Baixo", "Esquerda" ou "Direita". O texto reconhecido aparecerá abaixo.</p>
+                <div id="voice-output" class="voice-output-box">Aguardando comando...</div>
+                <div class="selection-footer">
+                    <button id="back-to-menu-from-test-btn" class="btn btn-secondary">Voltar ao Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Sequência -->
+        <div id="sequence-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-ui-container">
+                    <h2 id="modal-department-name">Atendimento</h2>
+                    <div class="meta-display">Meta: <span id="modal-meta">0 / 3</span></div>
+                    <div id="input-timer-bar-container" class="input-timer-bar-container">
+                        <div id="input-timer-bar"></div>
+                    </div>
+                    <div id="modal-arrows-sequence" class="arrows-sequence"></div>
+                    <div id="modal-characters" class="characters-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sobreposição de Pausa -->
+        <div id="pause-overlay" class="modal-overlay hidden">
+            <div class="pause-text">JOGO PAUSADO</div>
+        </div>
+
+        <!-- Tela de Avaliação da Diretoria -->
+        <div id="evaluation-screen" class="screen hidden">
+            <div class="evaluation-container">
+                <div class="evaluation-note">
+                    <p>NOTA:</p>
+                    <h2 id="final-grade">10</h2>
+                </div>
+                <button id="view-stats-btn" class="btn btn-primary">Ver Desempenho</button>
+            </div>
+        </div>
+
+        <!-- Tela de Estatísticas de Desempenho -->
+        <div id="stats-screen" class="screen hidden">
+            <div class="stats-container">
+                <h1>Avaliação da Diretoria</h1>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <p>Tempo de Jogo</p>
+                        <span id="stats-time">00:00</span>
+                    </div>
+                    <div class="stat-box">
+                        <p>Corretos</p>
+                        <span id="stats-correct" class="correct-text">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <p>Incorretos</p>
+                        <span id="stats-incorrect" class="incorrect-text">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <p>Eventos Concluídos</p>
+                        <span id="stats-completed">0</span>
+                    </div>
+                </div>
+                <div class="top-depts-container">
+                    <h3>🏆 Top 3 Departamentos</h3>
+                    <div id="top-depts-list"></div>
+                </div>
+                <button id="restart-button" class="btn btn-primary">Jogar Novamente</button>
+            </div>
+        </div>
+
+    </div> <!-- Fim do #game-wrapper -->
 
     <script src="script.js"></script>
 </body>

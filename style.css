@@ -10,19 +10,31 @@
     --incorrect-color: #dc3545;
 }
 
-body {
+/* CORREÇÃO: Estilos para centralizar e escalar o jogo */
+html {
+    height: 100%;
     background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
 }
 
-.screen { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+}
+
+#game-wrapper {
+    width: 1280px;
+    height: 720px;
+    position: absolute; /* <<-- CORREÇÃO AQUI */
+    transform-origin: top left;
+    transition: transform 0.2s ease-out;
+}
+
+
+.screen { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; position: absolute; top: 0; left: 0; }
 .hidden { display: none !important; }
 
 /* --- Estilos do Menu e Seleção --- */
@@ -107,7 +119,7 @@ body {
 .checkbox-label:hover { border-color: var(--primary-blue); }
 
 /* --- Estilos do Jogo Principal --- */
-.game-container { width: 1280px; height: 720px; display: flex; flex-direction: column; padding: 20px; }
+.game-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
 .game-controls {
     display: flex;
     justify-content: flex-end;
@@ -140,7 +152,7 @@ body {
 
 /* --- Estilos dos Modais e Overlays --- */
 .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.8);
     display: flex; justify-content: center; align-items: center; z-index: 1000;
 }
@@ -247,7 +259,7 @@ body {
 }
 
 #feedback-flash {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     z-index: 9999; pointer-events: none; opacity: 0;
 }
 #feedback-flash.correct-flash { animation: flash-animation 0.3s ease-out; box-shadow: inset 0 0 30px 15px var(--correct-color); }
