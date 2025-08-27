@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MAPEAMENTO DE ELEMENTOS DO DOM ---
     const gameWrapper = document.getElementById('game-wrapper');
     const screens = {
+        splash: document.getElementById('splash-screen'),
         menu: document.getElementById('main-menu-screen'),
         selection: document.getElementById('selection-screen'),
         game: document.getElementById('game-screen'),
@@ -15,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hud = { dias: document.getElementById('dias-restantes'), pontos: document.getElementById('pontuacao'), tempo: document.getElementById('tempo') };
     const modal = {
         element: document.getElementById('sequence-modal'), deptName: document.getElementById('modal-department-name'),
-        meta: document.getElementById('modal-meta'), timerBar: document.getElementById('input-timer-bar'),
+        meta: document.getElementById('modal-meta'), timerBarContainer: document.getElementById('input-timer-bar-container'),
         arrowSequence: document.getElementById('modal-arrows-sequence'), characters: document.getElementById('modal-characters'),
     };
     const selectionControls = {
@@ -51,8 +52,14 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'coord-diretoria', name: 'Diretoria Executiva/Coord. Adm.', men: 1, women: 1, color: '#343a40' },
         { id: 'historiador', name: 'Historiador', men: 1, women: 0, color: '#d65f1d' }
     ];
-    const ARROW_MAP = { 'ArrowUp': '↑', 'ArrowDown': '↓', 'ArrowLeft': '←', 'ArrowRight': '→' };
-    const ARROW_KEYS = Object.keys(ARROW_MAP);
+    
+    const ARROW_SVG = {
+        ArrowUp: `<svg viewBox="0 0 100 100"><polygon points="50,10 90,90 10,90"/></svg>`,
+        ArrowDown: `<svg viewBox="0 0 100 100"><polygon points="50,90 10,10 90,10"/></svg>`,
+        ArrowLeft: `<svg viewBox="0 0 100 100"><polygon points="10,50 90,10 90,90"/></svg>`,
+        ArrowRight: `<svg viewBox="0 0 100 100"><polygon points="90,50 10,90 10,10"/></svg>`,
+    };
+    const ARROW_KEYS = Object.keys(ARROW_SVG);
     const INPUT_TIME_MS = 3000;
     const GAME_DURATION_SECONDS = 300;
     const BASE_WIDTH = 1280;
@@ -81,7 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE COMANDO DE VOZ (WEB SPEECH API) ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const isSpeechRecognitionSupported = !!SpeechRecognition;
-    const VOICE_COMMANDS = { 'cima': 'ArrowUp', 'baixo': 'ArrowDown', 'esquerda': 'ArrowLeft', 'direita': 'ArrowRight' };
+    
+    // CORREÇÃO: Sistema de aliases para comandos de voz
+    const VOICE_COMMAND_ALIASES = {
+        ArrowUp: ['cima', 'acima', 'subir', 'para cima'],
+        ArrowDown: ['baixo', 'abaixo', 'descer', 'para baixo'],
+        ArrowLeft: ['esquerda', 'esquerdas', 'para esquerda'],
+        ArrowRight: ['direita', 'direito', 'direitas', 'para direita']
+    };
 
     function setupSpeechRecognition() {
         if (!isSpeechRecognitionSupported) {
@@ -97,9 +111,18 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.onresult = (event) => {
             const lastResult = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
             resourceTestControls.output.textContent = `Último comando ouvido: "${lastResult}"`;
-            const command = Object.keys(VOICE_COMMANDS).find(cmd => lastResult.includes(cmd));
-            if (command && gameState.activeDepartment && !gameState.isPaused) {
-                handleKeyPress({ key: VOICE_COMMANDS[command], preventDefault: () => {} });
+            
+            // CORREÇÃO: Lógica de busca de comando mais flexível
+            let foundCommandKey = null;
+            for (const [key, aliases] of Object.entries(VOICE_COMMAND_ALIASES)) {
+                if (aliases.some(alias => lastResult.includes(alias))) {
+                    foundCommandKey = key;
+                    break;
+                }
+            }
+
+            if (foundCommandKey && gameState.activeDepartment && !gameState.isPaused) {
+                handleKeyPress({ key: foundCommandKey, preventDefault: () => {} });
             }
         };
         recognition.onerror = (event) => {
@@ -148,10 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wasPaused === gameState.isPaused) return;
         overlays.pause.classList.toggle('hidden', !gameState.isPaused);
         gameControls.pauseBtn.textContent = gameState.isPaused ? 'Continuar (P)' : 'Pausar (P)';
-        if (gameState.activeDepartment) {
+        if (gameState.activeDepartment && !isVoiceControlActive) {
             if (gameState.isPaused) {
                 clearTimeout(timers.input);
-                modal.timerBar.style.transition = 'none';
+                modal.timerBarContainer.querySelector('#input-timer-bar').style.transition = 'none';
             } else {
                 resetInputTimer();
             }
@@ -208,7 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGameLoops() {
         clearInterval(timers.main);
         timers.main = setInterval(() => {
-            // CORREÇÃO: O timer principal também pausa quando uma sequência está ativa
             if (gameState.isPaused || gameState.activeDepartment) return;
             gameState.timeLeft--;
             gameState.daysLeft -= 0.01;
@@ -248,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startSequence(dept) {
-        // CORREÇÃO: Não usamos mais gameState.isPaused aqui
         gameState.activeDepartment = dept;
         const sequenceLength = Math.floor(Math.random() * 3) + 3;
         gameState.currentSequence = Array.from({ length: sequenceLength }, () => ARROW_KEYS[Math.floor(Math.random() * ARROW_KEYS.length)]);
@@ -262,18 +283,28 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < dept.women; i++) { modal.characters.innerHTML += `<img src="woman.png">`; }
         renderArrows();
         modal.element.classList.remove('hidden');
-        resetInputTimer();
+        
+        if (isVoiceControlActive) {
+            modal.timerBarContainer.classList.add('hidden');
+        } else {
+            modal.timerBarContainer.classList.remove('hidden');
+            resetInputTimer();
+        }
+
         window.addEventListener('keydown', handleKeyPress);
     }
 
     function resetInputTimer() {
         clearTimeout(timers.input);
-        modal.timerBar.style.transition = 'none';
-        modal.timerBar.style.width = '100%';
-        void modal.timerBar.offsetWidth;
-        modal.timerBar.style.transition = `width ${INPUT_TIME_MS / 1000}s linear`;
-        modal.timerBar.style.width = '0%';
-        timers.input = setTimeout(() => failSequence(true), INPUT_TIME_MS);
+        const timerBar = modal.timerBarContainer.querySelector('#input-timer-bar');
+        timerBar.style.transition = 'none';
+        timerBar.style.width = '100%';
+        void timerBar.offsetWidth;
+        timerBar.style.transition = `width ${INPUT_TIME_MS / 1000}s linear`;
+        timerBar.style.width = '0%';
+        if (!isVoiceControlActive) {
+            timers.input = setTimeout(() => failSequence(true), INPUT_TIME_MS);
+        }
     }
 
     function renderArrows() {
@@ -281,14 +312,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let className = 'arrow-box';
             if (index < gameState.currentStep) className += ' correct';
             else if (index === gameState.currentStep) className += ' current';
-            return `<div class="${className}">${ARROW_MAP[key]}</div>`;
+            return `<div class="${className}">${ARROW_SVG[key]}</div>`;
         }).join('');
     }
 
     function handleGlobalKeys(e) { if (e.key.toLowerCase() === 'p') togglePause(); }
 
     function handleKeyPress(e) {
-        // CORREÇÃO: A verificação de pausa agora funciona corretamente
         if (!gameState.activeDepartment || gameState.isPaused || !ARROW_KEYS.includes(e.key)) return;
         e.preventDefault();
         if (e.key === gameState.currentSequence[gameState.currentStep]) {
@@ -297,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderArrows();
             if (gameState.currentStep === gameState.currentSequence.length) {
                 completeSequence();
-            } else {
+            } else if (!isVoiceControlActive) {
                 resetInputTimer();
             }
         } else {
@@ -338,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.element.classList.add('hidden');
         createDepartmentCards();
         gameState.activeDepartment = null;
-        // CORREÇÃO: Não mexemos mais em gameState.isPaused aqui
         setTimeout(pickNextDepartment, 1200);
     }
 
@@ -392,6 +421,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         showScreen('stats');
     }
+    
+    function initSplashScreen() {
+        const proceed = () => {
+            window.removeEventListener('keydown', proceed);
+            window.removeEventListener('click', proceed);
+            showScreen('menu');
+        };
+        window.addEventListener('keydown', proceed);
+        window.addEventListener('click', proceed);
+    }
 
     // --- EVENT LISTENERS ---
     menuControls.playBtn.addEventListener('click', () => showScreen('selection'));
@@ -429,5 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
     populateSelectionGrid();
     setupSpeechRecognition();
     resizeGame();
-    showScreen('menu');
+    showScreen('splash');
+    initSplashScreen();
 });

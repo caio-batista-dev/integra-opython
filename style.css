@@ -10,32 +10,42 @@
     --incorrect-color: #dc3545;
 }
 
-/* CORREÇÃO: Estilos para centralizar e escalar o jogo */
-html {
-    height: 100%;
-    background-color: var(--bg-color);
-}
-
+/* Estilos de Responsividade */
+html { height: 100%; background-color: var(--bg-color); }
 body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+    height: 100%; margin: 0; padding: 0; overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text-color);
 }
-
 #game-wrapper {
-    width: 1280px;
-    height: 720px;
-    position: absolute; /* <<-- CORREÇÃO AQUI */
-    transform-origin: top left;
-    transition: transform 0.2s ease-out;
+    width: 1280px; height: 720px; position: absolute;
+    transform-origin: top left; transition: transform 0.2s ease-out;
 }
-
 
 .screen { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; position: absolute; top: 0; left: 0; }
 .hidden { display: none !important; }
+
+/* --- Estilos da Splash Screen --- */
+#splash-screen {
+    background-image: url('building-bg.png');
+    background-size: cover;
+    background-position: center;
+}
+.splash-text {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 20px 40px;
+    border-radius: 15px;
+    text-shadow: 0 0 10px black;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
 
 /* --- Estilos do Menu e Seleção --- */
 #main-menu-screen {
@@ -43,26 +53,17 @@ body {
     background-size: cover;
     background-position: center;
 }
-
 .menu-container {
     background-color: rgba(26, 35, 59, 0.85);
     backdrop-filter: blur(5px);
-    padding: 40px;
-    border-radius: 15px;
-    text-align: center;
-    width: 800px;
-    border: 2px solid var(--border-color);
+    padding: 40px; border-radius: 15px; text-align: center;
+    width: 800px; border: 2px solid var(--border-color);
 }
-
 .selection-container {
     background-color: var(--container-bg);
-    padding: 40px;
-    border-radius: 15px;
-    text-align: center;
-    width: 800px;
-    border: 2px solid var(--border-color);
+    padding: 40px; border-radius: 15px; text-align: center;
+    width: 800px; border: 2px solid var(--border-color);
 }
-
 .menu-container h1, .selection-container h2 { font-size: 2.5em; color: var(--primary-blue); margin-bottom: 20px; }
 .menu-container p { font-size: 1.1em; max-width: 600px; margin: 20px auto 30px; line-height: 1.6; }
 
@@ -72,23 +73,15 @@ body {
 }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { cursor: not-allowed; opacity: 0.5; }
-
 .btn-icon {
-    padding: 10px;
-    font-size: 1.5em;
-    width: 50px;
-    height: 50px;
-    background-color: transparent;
-    border: 2px solid var(--border-color);
-    color: var(--text-color);
-    border-radius: 50%;
+    padding: 10px; font-size: 1.5em; width: 50px; height: 50px;
+    background-color: transparent; border: 2px solid var(--border-color);
+    color: var(--text-color); border-radius: 50%;
 }
 .btn-icon.active {
-    background-color: var(--correct-color);
-    border-color: var(--correct-color);
+    background-color: var(--correct-color); border-color: var(--correct-color);
     box-shadow: 0 0 10px var(--correct-color);
 }
-
 .btn-primary { background-color: var(--primary-blue); color: #000; font-weight: bold; }
 .btn-primary:hover:not(:disabled) { background-color: #33ccff; }
 .btn-secondary { background-color: #3a4a75; color: var(--text-color); }
@@ -97,13 +90,7 @@ body {
 .btn-tertiary:hover { background-color: #3a4a75; }
 
 .menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 500px; margin: auto; }
-.selection-controls { 
-    margin-bottom: 20px; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-}
+.selection-controls { margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 15px; }
 .selection-footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; }
 .department-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
 .checkbox-label {
@@ -121,13 +108,8 @@ body {
 /* --- Estilos do Jogo Principal --- */
 .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
 .game-controls {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 15px;
-    padding: 0 30px 10px;
-    position: relative;
-    z-index: 1001;
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 15px; padding: 0 30px 10px; position: relative; z-index: 1001;
 }
 .game-controls .btn { padding: 8px 15px; font-size: 1em; }
 .hud { display: flex; justify-content: space-between; font-size: 2.2em; padding: 10px 30px; font-weight: bold; }
@@ -181,17 +163,21 @@ body {
 }
 #input-timer-bar { height: 100%; background-color: var(--yellow-glow); border-radius: 5px; width: 100%; }
 .arrows-sequence { display: flex; justify-content: center; gap: 15px; }
+
 .arrow-box {
     width: 70px; height: 70px; background-color: #000;
     border: 3px solid #555; border-radius: 12px;
     display: flex; justify-content: center; align-items: center;
-    font-size: 2.8em; transition: all 0.2s;
+    transition: all 0.2s;
 }
+.arrow-box svg { width: 60%; height: 60%; fill: #fff; }
 .arrow-box.current { border-color: var(--yellow-glow); transform: scale(1.1); }
-.arrow-box.correct { background-color: var(--correct-color); border-color: var(--correct-color); color: #fff; }
+.arrow-box.correct { background-color: var(--correct-color); border-color: var(--correct-color); }
+.arrow-box.correct svg { fill: #fff; }
+
 .characters-container {
     display: flex; justify-content: center; align-items: flex-end;
-    gap: 5px; margin-top: 15px; height: 80px;
+    gap: 10px; margin-top: 15px; height: 110px;
 }
 .characters-container img {
     height: 100%; image-rendering: pixelated;
