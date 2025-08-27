@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const evaluationControls = { finalGrade: document.getElementById('final-grade'), viewStatsBtn: document.getElementById('view-stats-btn') };
     const statsControls = {
         time: document.getElementById('stats-time'), correct: document.getElementById('stats-correct'),
-        incorrect: document.getElementById('stats-incorrect'), completed: document.getElementById('stats-completed'),
+        incorrect: document.getElementById('stats-incorrect'), combo: document.getElementById('stats-combo'),
         topDeptsList: document.getElementById('top-depts-list'), restartBtn: document.getElementById('restart-button'),
     };
     const resourceTestControls = {
@@ -38,19 +38,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E ESTADO DO JOGO ---
     const ALL_DEPARTMENTS_DATA = [
-        { id: 'atendimento', name: 'Atendimento', men: 1, women: 0, color: '#007bff' },
-        { id: 'camaras', name: 'Câmaras Setoriais', men: 1, women: 1, color: '#17a2b8' },
-        { id: 'cieq', name: 'CIEQ – Estágio', men: 0, women: 1, color: '#28a745' },
-        { id: 'comercial', name: 'Comercial', men: 1, women: 2, color: '#6f42c1' },
-        { id: 'compras', name: 'Compras', men: 1, women: 0, color: '#6610f2' },
-        { id: 'marketing', name: 'Marketing', men: 0, women: 1, color: '#e83e8c' },
-        { id: 'projetos', name: 'Projetos', men: 1, women: 1, color: '#fd7e14' },
-        { id: 'rodada', name: 'Rodada de Negócios', men: 1, women: 3, color: '#20c997' },
-        { id: 'geral', name: 'Serviço Geral', men: 1, women: 2, color: '#dc3545' },
-        { id: 'faturamento-receber', name: 'Faturamento/Contas a receber', men: 1, women: 1, color: '#c29b0c' },
-        { id: 'financeiro-contabilidade', name: 'Financeiro/Contabilidade', men: 0, women: 3, color: '#6c757d' },
-        { id: 'coord-diretoria', name: 'Diretoria Executiva/Coord. Adm.', men: 1, women: 1, color: '#343a40' },
-        { id: 'historiador', name: 'Historiador', men: 1, women: 0, color: '#d65f1d' }
+        { id: 'atendimento', name: 'Atendimento', men: 1, women: 0, apprentices: 0, color: '#007bff' },
+        { id: 'camaras', name: 'Câmaras Setoriais', men: 1, women: 1, apprentices: 0, color: '#17a2b8' },
+        { id: 'cieq', name: 'CIEQ – Estágio', men: 0, women: 1, apprentices: 0, color: '#28a745' },
+        { id: 'comercial', name: 'Comercial', men: 1, women: 2, apprentices: 0, color: '#6f42c1' },
+        { id: 'compras', name: 'Compras', men: 1, women: 0, apprentices: 1, color: '#6610f2' },
+        { id: 'marketing', name: 'Marketing', men: 0, women: 1, apprentices: 0, color: '#e83e8c' },
+        { id: 'projetos', name: 'Projetos', men: 1, women: 1, apprentices: 1, color: '#fd7e14' },
+        { id: 'rodada', name: 'Rodada de Negócios', men: 0, women: 3, apprentices: 0, color: '#20c997' },
+        { id: 'geral', name: 'Serviço Geral', men: 1, women: 2, apprentices: 0, color: '#dc3545' },
+        { id: 'faturamento-receber', name: 'Faturamento/Contas a receber', men: 1, women: 1, apprentices: 0, color: '#c29b0c' },
+        { id: 'financeiro-contabilidade', name: 'Financeiro/Contabilidade', men: 0, women: 3, apprentices: 0, color: '#6c757d' },
+        { id: 'coord-diretoria', name: 'Diretoria Executiva/Coord. Adm.', men: 1, women: 1, apprentices: 0, color: '#343a40' },
+        { id: 'historiador', name: 'Historiador', men: 0, women: 0, apprentices: 0, specialSprite: 'associado.png', color: '#d65f1d' }
     ];
     
     const ARROW_SVG = {
@@ -88,8 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE COMANDO DE VOZ (WEB SPEECH API) ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const isSpeechRecognitionSupported = !!SpeechRecognition;
-    
-    // CORREÇÃO: Sistema de aliases para comandos de voz
     const VOICE_COMMAND_ALIASES = {
         ArrowUp: ['cima', 'acima', 'subir', 'para cima'],
         ArrowDown: ['baixo', 'abaixo', 'descer', 'para baixo'],
@@ -111,8 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.onresult = (event) => {
             const lastResult = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
             resourceTestControls.output.textContent = `Último comando ouvido: "${lastResult}"`;
-            
-            // CORREÇÃO: Lógica de busca de comando mais flexível
             let foundCommandKey = null;
             for (const [key, aliases] of Object.entries(VOICE_COMMAND_ALIASES)) {
                 if (aliases.some(alias => lastResult.includes(alias))) {
@@ -120,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 }
             }
-
             if (foundCommandKey && gameState.activeDepartment && !gameState.isPaused) {
                 handleKeyPress({ key: foundCommandKey, preventDefault: () => {} });
             }
@@ -219,19 +214,20 @@ document.addEventListener('DOMContentLoaded', () => {
             score: 0, timeLeft: GAME_DURATION_SECONDS, daysLeft: 20.0, activeDepartment: null,
             currentSequence: [], currentStep: 0, isPaused: false, departments: selectedDepartments,
             totalCorrects: 0, totalIncorrects: 0, startTime: Date.now(),
+            currentCombo: 0, maxCombo: 0,
         };
         showScreen('game');
         createDepartmentCards();
         updateHUD();
         startGameLoops();
         window.addEventListener('keydown', handleGlobalKeys);
-        setTimeout(pickNextDepartment, 1500);
+        timers.nextDept = setTimeout(pickNextDepartment, 1500);
     }
 
     function startGameLoops() {
         clearInterval(timers.main);
         timers.main = setInterval(() => {
-            if (gameState.isPaused || gameState.activeDepartment) return;
+            if (gameState.isPaused) return;
             gameState.timeLeft--;
             gameState.daysLeft -= 0.01;
             if (gameState.timeLeft <= 0 || gameState.daysLeft <= 0) endGame(false);
@@ -262,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function pickNextDepartment() {
-        if (gameState.isPaused) return;
+        if (gameState.isPaused || screens.game.classList.contains('hidden')) return;
         const availableDepts = gameState.departments.filter(d => d.progress < d.meta);
         if (availableDepts.length === 0) { endGame(true); return; }
         const nextDept = availableDepts[Math.floor(Math.random() * availableDepts.length)];
@@ -271,16 +267,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startSequence(dept) {
         gameState.activeDepartment = dept;
-        const sequenceLength = Math.floor(Math.random() * 3) + 3;
+        const sequenceLength = Math.floor(Math.random() * 2) + 3;
         gameState.currentSequence = Array.from({ length: sequenceLength }, () => ARROW_KEYS[Math.floor(Math.random() * ARROW_KEYS.length)]);
         gameState.currentStep = 0;
         document.getElementById(`dept-card-${dept.originalIndex}`).classList.add('active');
         modal.deptName.textContent = dept.name;
         modal.meta.textContent = `${dept.progress} / ${dept.meta}`;
         modal.element.querySelector('.modal-content').style.borderColor = dept.color;
+        
         modal.characters.innerHTML = '';
-        for (let i = 0; i < dept.men; i++) { modal.characters.innerHTML += `<img src="man.png">`; }
-        for (let i = 0; i < dept.women; i++) { modal.characters.innerHTML += `<img src="woman.png">`; }
+        if (dept.specialSprite) {
+            modal.characters.innerHTML = `<img src="${dept.specialSprite}">`;
+        } else {
+            for (let i = 0; i < dept.men; i++) { modal.characters.innerHTML += `<img src="man.png">`; }
+            for (let i = 0; i < dept.women; i++) { modal.characters.innerHTML += `<img src="woman.png">`; }
+            for (let i = 0; i < dept.apprentices; i++) { modal.characters.innerHTML += `<img src="aprendiz.png">`; }
+        }
+
         renderArrows();
         modal.element.classList.remove('hidden');
         
@@ -344,6 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const sequenceLength = gameState.currentSequence.length;
         gameState.totalCorrects += sequenceLength;
         dept.corrects += sequenceLength;
+        
+        gameState.currentCombo++;
+        if (gameState.currentCombo > gameState.maxCombo) {
+            gameState.maxCombo = gameState.currentCombo;
+        }
+
         updateHUD();
         closeModal();
     }
@@ -355,6 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.totalIncorrects++;
         if(gameState.activeDepartment) gameState.activeDepartment.errors++;
         gameState.score = Math.max(0, gameState.score - 100);
+        
+        gameState.currentCombo = 0;
+
         updateHUD();
         closeModal();
     }
@@ -368,12 +380,14 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.element.classList.add('hidden');
         createDepartmentCards();
         gameState.activeDepartment = null;
-        setTimeout(pickNextDepartment, 1200);
+        timers.nextDept = setTimeout(pickNextDepartment, 1200);
     }
 
     function cleanUpGame() {
         clearInterval(timers.main);
         clearTimeout(timers.input);
+        clearTimeout(timers.nextDept); // CORREÇÃO: Cancela o timer fantasma
+        modal.element.classList.add('hidden'); // CORREÇÃO: Garante que o modal seja fechado
         window.removeEventListener('keydown', handleGlobalKeys);
         window.removeEventListener('keydown', handleKeyPress);
         if (isVoiceControlActive) toggleVoiceControls(false);
@@ -383,19 +397,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame(isVictory) {
         cleanUpGame();
         gameState.isPaused = true;
+        gameState.endTime = Date.now();
         const finalGrade = calculateFinalGrade(isVictory);
         showEvaluationScreen(finalGrade);
     }
 
     function calculateFinalGrade(isVictory) {
+        let grade = 4.0;
         const successfulSequences = gameState.totalCorrects / (gameState.currentSequence?.length || 3);
         const totalSequencesAttempted = successfulSequences + gameState.totalIncorrects;
         const accuracy = totalSequencesAttempted > 0 ? successfulSequences / totalSequencesAttempted : 0;
-        const timeTaken = (Date.now() - gameState.startTime) / 1000;
-        const timeEfficiency = Math.max(0, (GAME_DURATION_SECONDS - timeTaken) / GAME_DURATION_SECONDS);
-        let grade = (accuracy * 6) + (timeEfficiency * 2);
-        if (isVictory) { grade += 2; }
-        return Math.max(0, Math.min(10, grade)).toFixed(1);
+        grade += accuracy * 5.0;
+        if (isVictory) {
+            grade += 1.0;
+        }
+        return Math.min(10, grade).toFixed(1);
     }
 
     function showEvaluationScreen(grade) {
@@ -404,13 +420,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showStatsScreen() {
-        const timeTaken = Math.round((Date.now() - gameState.startTime) / 1000);
+        const timeTaken = Math.round((gameState.endTime - gameState.startTime) / 1000);
         const minutes = Math.floor(timeTaken / 60);
         const seconds = timeTaken % 60;
         statsControls.time.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         statsControls.correct.textContent = gameState.totalCorrects;
         statsControls.incorrect.textContent = gameState.totalIncorrects;
-        statsControls.completed.textContent = gameState.departments.filter(d => d.progress >= d.meta).length;
+        statsControls.combo.textContent = gameState.maxCombo;
+        
         const sortedDepts = [...gameState.departments].sort((a, b) => (b.corrects - b.errors) - (a.corrects - a.errors));
         statsControls.topDeptsList.innerHTML = '';
         sortedDepts.slice(0, 3).forEach(dept => {
